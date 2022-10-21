@@ -11,7 +11,7 @@ module processor( input         clk, reset,
     reg [31:0] program_counter;
 
     always @ ( posedge clk )
-        adder_32b PC_default_inc ( 4, program_counter, program_counter ); // pc += 4
+        PCPlus4 += 4;
 
     wire [31:0] main_bus;
     
@@ -22,6 +22,12 @@ module processor( input         clk, reset,
     wire zero;
     wire [31:0] writeData;
     wire [31:0] readData;
+    wire [31:0] branchTarget;
+    wire [31:0] memToRegRes;
+    wire [31:0] AluSrcOut;
+    reg [31:0] PCPlus4;
+    wire [31:0] branchJalReturnAddr;
+    wire [31:0] branchJalrMuxIn;
 
     /* Control signals */
     wire [2:0] ALUControl;
@@ -31,14 +37,24 @@ module processor( input         clk, reset,
     wire regWriteControl;
     wire ALUSrcControl;
     wire MemToRegControl;
-
-    reg_32b ( instruction[19:15], data_to_mem[24:20], instruction[11:7], readData, clk, regWriteControl /*we3*/, rs1, writeData );
-    imm_decode ( immControl, instruction[31:7], immOp );
-    alu_32b ( rs1, rs2, ALUControl, ALUOut, zero );
+    wire branchBeqControl;
+    wire branchJalControl;
+    wire branchJalrControl;
     
 
-    mux2_1_32b ALUSrc_mux ( ALUSrcControl, writeData, immOp );
-    mux2_1_32b MemToReg_mux ( MemToRegControl, ALUOut, readData );
+
+    reg_32b ( instruction[19:15], data_to_mem[24:20], instruction[11:7], memToRegRes, clk, regWriteControl /*we3*/, rs1, writeData );
+    imm_decode ( immControl, instruction[31:7], immOp );
+    alu_32b ( rs1, AluSrcOut, ALUControl, ALUOut, zero );
+
+    adder_32b branchAdder ( immOp, program_counter, branchJalrMuxIn );
+
+    mux2_1_32b ALUSrc_mux ( ALUSrcControl, writeData, immOp, AluSrcOut );
+    mux2_1_32b MemToReg_mux ( MemToRegControl, branchJalMux, readData, memToRegRes );
+    wire branchOutcome = (branchBeqControl & zero) | branchJalControl | branchJalrControl;
+    mux2_1_32b BranchOutcome_mux ( branchOutcome, PCPlus4, branchTarget, program_counter );
+    mux2_1_32b BranchJalAndJalr_mux ( branchJalControl | branchJalrControl, ALUOut, PCPlus4, branchJalReturnAddr );
+    mux2_1_32b BranchJalr_mux ( branchJalrControl, branchJalrMuxIn, ALUOut, branchTarget );
 
     assign address_to_mem = ALUOut;
 
