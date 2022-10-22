@@ -1,6 +1,12 @@
 `default_nettype none
+// 
+/**
+ NOTES: 
+ lui: alusrc = 1, memtoreg = 1
+ branchblt: 
+
+*/
 // todo: reset, shift J type instruction immediate
-// NOTES: alusrc = 1, memtoreg = 1 for lui
 module processor( input         clk, reset,
                   output [31:0] PC,
                   input  [31:0] instruction,
@@ -47,10 +53,19 @@ module processor( input         clk, reset,
     reg_32b registerSet ( instruction[19:15], data_to_mem[24:20], instruction[11:7], memToRegRes, clk, regWriteControl /*we3*/, rs1, writeData );
     imm_decode immediate_decoder ( immControl, instruction[31:7], immOp );
     alu_32b alu ( rs1, AluSrcOut, ALUControl, ALUOut, zero );
+    
 
-    adder_32b branchAdder ( { { 12 { 1'b0 } }, immOp}, program_counter, branchJalrMuxIn ); // expand immOP with zeros
+    reg [31:0] immOpExpanded;
+    // expands J type for 21 bits of immediate value
+    always @ ( posedge clk )
+        if ( branchJalControl | branchJalrControl )
+            immOpExpanded = { { 11 { 1'b0 } }, immOp, 1'b0 };
+        else
+            immOpExpanded = { { 12 { 1'b0 } }, immOp };
 
-    mux2_1_32b ALUSrc_mux ( ALUSrcControl, writeData, { {12 { 1'b0 } }, immOp }, AluSrcOut );
+    adder_32b branchAdder ( immOpExpanded, program_counter, branchJalrMuxIn ); // expand immOP with zeros
+
+    mux2_1_32b ALUSrc_mux ( ALUSrcControl, writeData, immOpExpanded, AluSrcOut );
     mux2_1_32b MemToReg_mux ( MemToRegControl, branchJalReturnAddr, readData, memToRegRes );
     wire branchOutcome = ( branchBeqControl & zero ) | branchJalControl | branchJalrControl | ( ALUOut & branchBltControl );
     mux2_1_32b BranchOutcome_mux ( branchOutcome, PCPlus4, branchTarget, program_counter );
@@ -80,7 +95,7 @@ module imm_decode ( input [2:0] i_type,
             end
 
             3'b100: imm_out[19:0] = imm_in[31:12]; // U-type
-            3'b101: begin // J-type, shifted by 1 bit to the right
+            3'b101: begin // J-type, shifted 1 bit to the right
                     imm_out[19] = imm_in[31];
                     imm_out[9:0] = imm_in[30:21];
                     imm_out[10] = imm_in[20];
@@ -112,94 +127,231 @@ module reg_32b ( input [4:0] a1, a2, a3,
     always @ ( a1, a2 ) begin
         rd1 = registers[a1];
         rd2 = registers[a2];
-        registers[0] = 0;
     end
 
-    always @ ( posedge clk ) begin
-        if ( we3 == 1 )
+    always @ ( posedge clk )
+        if ( we3 == 1 && a3 != 0)
             registers[a3] = wd3;
-        registers[0] = 0;
-    end
-    
 
 endmodule
 
-module alu_32b ( input [31:0] SrcA, SrcB,
+module alu_32b ( input [31:0] srcA, srcB,
                  input [2:0] ALUControl,
                  output reg [31:0] ALUResult,
-                 output reg Zero );
+                 output reg zero );
     
     always @ (*) begin
 
         case ( ALUControl )
-            3'b000: ALUResult = SrcA + SrcB;
-            3'b001: ALUResult = SrcA - SrcB;
-            3'b010: ALUResult = SrcA & SrcB;
-            3'b011: ALUResult = SrcA < SrcB ? 1 : 0; // slt
-            3'b100: ALUResult = SrcA / SrcB;
-            3'b101: ALUResult = SrcA % SrcB;
-            3'b110: ALUResult = { SrcB[31:12], { 12{1'b0} } } ; // lui
+            3'b000: ALUResult = srcA + srcB;
+            3'b001: ALUResult = srcA - srcB;
+            3'b010: ALUResult = srcA & srcB;
+            3'b011: ALUResult = srcA < srcB ? 1 : 0; // slt
+            3'b100: ALUResult = srcA / srcB;
+            3'b101: ALUResult = srcA % srcB;
+            3'b110: ALUResult = { srcB[31:12], { 12 { 1'b0 } } } ; // lui
+            3'b111: ALUResult = srcA | srcB;
         endcase
     
-    Zero = ALUResult == 0 ? 1 : 0;
+    zero = ALUResult == 0 ? 1 : 0;
     end
 
 endmodule
 
-module control_unit ( input [6:0] opcode,
-                      output reg ALUSrc, RegWrite, MemWrite, Branch,
-                      output reg [1:0] ALUControl );
+module control_unit ( input [31:0]      instruction,
+                      output reg [2:0] immControl, ALUControl,
+                      output reg       memWriteControl,
+                                       regWriteControl,
+                                       ALUSrcControl,
+                                       MemToRegControl,
+                                       branchBeqControl,
+                                       branchJalControl,
+                                       branchJalrControl,
+                                       branchBltControl );
+        wire [6:0] opcode = instruction[6:0];
+        wire [14:12] funct3 = instruction[14:12];
+        wire [31:25] funct7 = instruction[31:25];
         always @ ( * ) begin
+
             case ( opcode )
-                3'b000: begin
-                    ALUSrc = 0;
-                    RegWrite = 1;
-                    ALUControl = 2'b00;
-                    MemWrite = 0;
-                    Branch = 0;
-                end
-                3'b001: begin
-                    ALUSrc = 1;
-                    RegWrite = 1;
-                    ALUControl = 2'b00;
-                    MemWrite = 0;
-                    Branch = 0;
-                end
-                3'b010: begin
-                    ALUSrc = 0;
-                    RegWrite = 1;
-                    ALUControl = 2'b01;
-                    MemWrite = 0;
-                    Branch = 0;
-                end
-                3'b011: begin
-                    ALUSrc = 1;
-                    RegWrite = 1;
-                    ALUControl = 2'b00;
-                    MemWrite = 0;
-                    Branch = 0;
-                end
-                3'b100: begin
-                    ALUSrc = 1;
-                    RegWrite = 0;
-                    ALUControl = 2'b00;
-                    MemWrite = 1;
-                    Branch = 0;
-                end
-                3'b101: begin
-                    ALUSrc = 0;
-                    RegWrite = 0;
-                    ALUControl = 2'b01;
-                    MemWrite = 0;
-                    Branch = 1;
-                end
-                default: begin
-                    ALUSrc = 0;
-                    RegWrite = 0;
-                    ALUControl = 2'b00;
-                    MemWrite = 0;
-                    Branch = 0;
-                end
+            7'b0000011: begin // I-type
+                case ( funct3 )
+                    3'b010: begin // lw
+                      immControl = 3'b001;
+                      ALUControl = 3'b000;
+                      memWriteControl = 0;
+                      regWriteControl = 1;
+                      ALUSrcControl = 1;
+                      MemToRegControl = 1;
+                      branchBeqControl = 0;
+                      branchJalControl = 0;
+                      branchJalrControl = 0;
+                      branchBltControl = 0;
+                    end
+                endcase
+            end
+            7'b0010011: begin  // I-type: addi
+                case ( funct3 )
+                    3'b000: begin // addi
+                      immControl = 3'b001;
+                      ALUControl = 3'b000;
+                      memWriteControl = 0;
+                      regWriteControl = 1;
+                      ALUSrcControl = 1;
+                      MemToRegControl = 0;
+                      branchBeqControl = 0;
+                      branchJalControl = 0;
+                      branchJalrControl = 0;
+                      branchBltControl = 0;
+                    end
+                endcase
+            end
+            7'b0100011: begin  // S-type
+                case ( funct3 )
+                    3'b000: begin // sw
+                        immControl = 3'b010;
+                        ALUControl = 3'b000;
+                        memWriteControl = 1;
+                        regWriteControl = 0;
+                        ALUSrcControl = 0;
+                        MemToRegControl = 1;
+                        branchBeqControl = 0;
+                        branchJalControl = 0;
+                        branchJalrControl = 0;
+                        branchBltControl = 0;
+                    end
+                endcase
+            end
+            7'b0110011: begin // R-type
+                case ( funct3 )
+                    3'b000: case ( funct7 )
+                            7'b0000000: begin
+                                immControl = 3'b000;
+                                ALUControl = 3'b000;
+                                memWriteControl = 0;
+                                regWriteControl = 1;
+                                ALUSrcControl = 0;
+                                MemToRegControl = 0;
+                                branchBeqControl = 0;
+                                branchJalControl = 0;
+                                branchJalrControl = 0;
+                                branchBltControl = 0;
+                            end
+                            7'b0100000: begin
+                                immControl = 3'b000;
+                                ALUControl = 3'b001;
+                                memWriteControl = 0;
+                                regWriteControl = 1;
+                                ALUSrcControl = 0;
+                                MemToRegControl = 0;
+                                branchBeqControl = 0;
+                                branchJalControl = 0;
+                                branchJalrControl = 0;
+                                branchBltControl = 0;
+                            end
+                        endcase
+                    3'b010: begin // slt
+                        immControl = 3'b000;
+                        ALUControl = 3'b011;
+                        memWriteControl = 0;
+                        regWriteControl = 1;
+                        ALUSrcControl = 0;
+                        MemToRegControl = 0;
+                        branchBeqControl = 0;
+                        branchJalControl = 0;
+                        branchJalrControl = 0;
+                        branchBltControl = 0;
+                    end
+                    3'b110: begin // or
+                        immControl = 3'b000;
+                        ALUControl = 3'b111;
+                        memWriteControl = 0;
+                        regWriteControl = 1;
+                        ALUSrcControl = 0;
+                        MemToRegControl = 0;
+                        branchBeqControl = 0;
+                        branchJalControl = 0;
+                        branchJalrControl = 0;
+                        branchBltControl = 0;
+                    end
+                    3'b111: begin // and
+                        immControl = 3'b000;
+                        ALUControl = 3'b010;
+                        memWriteControl = 0;
+                        regWriteControl = 1;
+                        ALUSrcControl = 0;
+                        MemToRegControl = 0;
+                        branchBeqControl = 0;
+                        branchJalControl = 0;
+                        branchJalrControl = 0;
+                        branchBltControl = 0;
+                    end
+                endcase
+            end
+            7'b1100011: begin // B-type
+                case ( funct3 )
+                    3'b000: begin // beq
+                        immControl = 3'b011;
+                        ALUControl = 3'b001;
+                        memWriteControl = 0;
+                        regWriteControl = 0;
+                        ALUSrcControl = 0;
+                        MemToRegControl = 0;
+                        branchBeqControl = 1;
+                        branchJalControl = 0;
+                        branchJalrControl = 0;
+                        branchBltControl = 0;
+                    end
+                    3'b001: begin // blt
+                        immControl = 3'b011;
+                        ALUControl = 3'b011;
+                        memWriteControl = 0;
+                        regWriteControl = 0;
+                        ALUSrcControl = 0;
+                        MemToRegControl = 0;
+                        branchBeqControl = 1;
+                        branchJalControl = 0;
+                        branchJalrControl = 0;
+                        branchBltControl = 1;
+                    end
+                endcase
+            end
+            7'b1100111: begin // I-type: jalr
+                immControl = 3'b001;
+                ALUControl = 3'b000;
+                memWriteControl = 0;
+                regWriteControl = 1;
+                ALUSrcControl = 1;
+                MemToRegControl = 0;
+                branchBeqControl = 0;
+                branchJalControl = 0;
+                branchJalrControl = 1;
+                branchBltControl = 0;
+            end
+            7'b1101111: begin // J-type: jal
+                immControl = 3'b101;
+                ALUControl = 3'b000;
+                memWriteControl = 0;
+                regWriteControl = 1;
+                ALUSrcControl = 0;
+                MemToRegControl = 0;
+                branchBeqControl = 0;
+                branchJalControl = 1;
+                branchJalrControl = 0;
+                branchBltControl = 0;
+            end
+            7'b0110111: begin // U-type: lui
+                immControl = 3'b100;
+                ALUControl = 3'b110;
+                memWriteControl = 0;
+                regWriteControl = 1;
+                ALUSrcControl = 1;
+                MemToRegControl = 0;
+                branchBeqControl = 0;
+                branchJalControl = 0;
+                branchJalrControl = 0;
+                branchBltControl = 0;
+            end
             endcase
         end
 

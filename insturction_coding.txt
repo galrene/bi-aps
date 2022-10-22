@@ -1,0 +1,34 @@
+
+add:	0000000	    rs2	rs1	000	rd	0110011
+addi	imm[11:0]	    rs1	000	rd	0010011
+and:	0000000	    rs2	rs1	111	rd	0110011
+sub:	0100000	    rs2	rs1	000	rd	0110011
+slt:	0000000	    rs2	rs1	010	rd	0110011
+div:	0000001     rs2	rs1	100	rd	0110011
+rem:	0000001     rs2	rs1	110	rd	0110011
+beq:	imm[12|10:5]	rs2	rs1	000	imm[4:1|11]	1100011
+blt:	imm[12|10:5]	rs2	rs1	100	imm[4:1|11]	1100011
+lw:	    imm[11:0]	                rs1	010	rd	0000011
+sw:	    imm[11:5]	rs2	rs1	010	imm[4:0]	0100011
+lui:	imm[31:12]	rd	0110111
+jal:	imm[20|10:1|11|19:12]	rd	1101111
+jalr:	imm[11:0]	rs1	000	rd	1100111
+auipc:	imm[31:12]	rd	0010111
+sll:	0000000	rs2	rs1	001	rd	0110011
+srl:	0000000	rs2	rs1	101	rd	0110011
+sra:	0100000	rs2	rs1	101	rd	0110011
+
+        case ( funct3 )
+                    3'b000: begin
+                        immControl = 3'b000;
+                        ALUControl = 3'b000;
+                        memWriteControl = 0;
+                        regWriteControl = 0;
+                        ALUSrcControl = 0;
+                        MemToRegControl = 0;
+                        branchBeqControl = 0;
+                        branchJalControl = 0;
+                        branchJalrControl = 0;
+                        branchBltContro = 0;
+                    end
+                endcase
