@@ -1,12 +1,6 @@
 `default_nettype none
-// 
-/**
- NOTES: 
- lui: alusrc = 1, memtoreg = 1
- branchblt: 
 
-*/
-// todo: reset, shift J type instruction immediate
+// todo: reset
 module processor( input         clk, reset,
                   output [31:0] PC,
                   input  [31:0] instruction,
