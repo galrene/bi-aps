@@ -1,5 +1,5 @@
 `default_nettype none
-// todo: reset
+// todo: reset, shift J type instruction immediate
 module processor( input         clk, reset,
                   output [31:0] PC,
                   input  [31:0] instruction,
@@ -8,7 +8,7 @@ module processor( input         clk, reset,
                   output [31:0] data_to_mem,
                   input  [31:0] data_from_mem
                 );
-    reg [31:0] program_counter;
+    wire [31:0] program_counter;
 
     always @ ( posedge clk )
         PCPlus4 += 4;
@@ -31,7 +31,7 @@ module processor( input         clk, reset,
 
     /* Control signals */
     wire [2:0] ALUControl;
-    wire immControl;
+    wire [2:0] immControl;
     wire memWriteControl;
     assign WE = memWriteControl;
     wire regWriteControl;
@@ -43,15 +43,15 @@ module processor( input         clk, reset,
     
 
 
-    reg_32b ( instruction[19:15], data_to_mem[24:20], instruction[11:7], memToRegRes, clk, regWriteControl /*we3*/, rs1, writeData );
-    imm_decode ( immControl, instruction[31:7], immOp );
-    alu_32b ( rs1, AluSrcOut, ALUControl, ALUOut, zero );
+    reg_32b registerSet ( instruction[19:15], data_to_mem[24:20], instruction[11:7], memToRegRes, clk, regWriteControl /*we3*/, rs1, writeData );
+    imm_decode immediate_decoder ( immControl, instruction[31:7], immOp );
+    alu_32b alu ( rs1, AluSrcOut, ALUControl, ALUOut, zero );
 
-    adder_32b branchAdder ( immOp, program_counter, branchJalrMuxIn );
+    adder_32b branchAdder ( { { 12 { 1'b0 } }, immOp}, program_counter, branchJalrMuxIn ); // expand immOP with zeros
 
-    mux2_1_32b ALUSrc_mux ( ALUSrcControl, writeData, immOp, AluSrcOut );
-    mux2_1_32b MemToReg_mux ( MemToRegControl, branchJalMux, readData, memToRegRes );
-    wire branchOutcome = (branchBeqControl & zero) | branchJalControl | branchJalrControl;
+    mux2_1_32b ALUSrc_mux ( ALUSrcControl, writeData, { {12 { 1'b0 } }, immOp }, AluSrcOut );
+    mux2_1_32b MemToReg_mux ( MemToRegControl, branchJalReturnAddr, readData, memToRegRes );
+    wire branchOutcome = ( branchBeqControl & zero ) | branchJalControl | branchJalrControl;
     mux2_1_32b BranchOutcome_mux ( branchOutcome, PCPlus4, branchTarget, program_counter );
     mux2_1_32b BranchJalAndJalr_mux ( branchJalControl | branchJalrControl, ALUOut, PCPlus4, branchJalReturnAddr );
     mux2_1_32b BranchJalr_mux ( branchJalrControl, branchJalrMuxIn, ALUOut, branchTarget );
@@ -97,11 +97,8 @@ module adder_32b ( input [31:0] a, b,
 endmodule
 
 module mux2_1_32b ( input sig, input [31:0] a, b,
-                    output reg [31:0] out );
-        always @ ( * ) begin
-            out = sig ? b : a;
-        end
-
+                    output [31:0] out );
+        assign out = ( a & !sig ) | ( b & sig ) ;
 endmodule
 
 module reg_32b ( input [4:0] a1, a2, a3,
