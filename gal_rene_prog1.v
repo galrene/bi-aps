@@ -40,7 +40,7 @@ module processor( input         clk, reset,
     wire branchBeqControl;
     wire branchJalControl;
     wire branchJalrControl;
-    
+    wire branchBltControl;    
 
 
     reg_32b registerSet ( instruction[19:15], data_to_mem[24:20], instruction[11:7], memToRegRes, clk, regWriteControl /*we3*/, rs1, writeData );
@@ -51,7 +51,7 @@ module processor( input         clk, reset,
 
     mux2_1_32b ALUSrc_mux ( ALUSrcControl, writeData, { {12 { 1'b0 } }, immOp }, AluSrcOut );
     mux2_1_32b MemToReg_mux ( MemToRegControl, branchJalReturnAddr, readData, memToRegRes );
-    wire branchOutcome = ( branchBeqControl & zero ) | branchJalControl | branchJalrControl;
+    wire branchOutcome = ( branchBeqControl & zero ) | branchJalControl | branchJalrControl | ( ALUOut & branchBltControl );
     mux2_1_32b BranchOutcome_mux ( branchOutcome, PCPlus4, branchTarget, program_counter );
     mux2_1_32b BranchJalAndJalr_mux ( branchJalControl | branchJalrControl, ALUOut, PCPlus4, branchJalReturnAddr );
     mux2_1_32b BranchJalr_mux ( branchJalrControl, branchJalrMuxIn, ALUOut, branchTarget );
