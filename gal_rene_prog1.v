@@ -1,5 +1,6 @@
 `default_nettype none
 // todo: reset, shift J type instruction immediate
+// NOTES: alusrc = 1, memtoreg = 1 for lui
 module processor( input         clk, reset,
                   output [31:0] PC,
                   input  [31:0] instruction,
@@ -137,6 +138,7 @@ module alu_32b ( input [31:0] SrcA, SrcB,
             3'b011: ALUResult = SrcA < SrcB ? 1 : 0; // slt
             3'b100: ALUResult = SrcA / SrcB;
             3'b101: ALUResult = SrcA % SrcB;
+            3'b110: ALUResult = { SrcB[31:12], { 12{1'b0} } } ; // lui
         endcase
     
     Zero = ALUResult == 0 ? 1 : 0;
