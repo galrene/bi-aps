@@ -9,15 +9,18 @@ module processor( input         clk, reset,
                   output [31:0] data_to_mem,
                   input  [31:0] data_from_mem
                 );
-    wire [31:0] program_counter;
+    reg [31:0] program_counter;
+    assign PC = program_counter;
 
-    always @ ( posedge clk )
+    wire [31:0] PC_cable = program_counter;
+
+    always @ ( posedge clk ) begin
         PCPlus4 += 4;
-
-    wire [31:0] main_bus;
+    if ( reset )
+        program_counter = { 32 { 1'b0 } };
+    end
     
     wire [31:0] rs1;
-    wire [31:0] rs2;
     wire [31:0] ALUOut;
     wire [19:0] immOp;
     wire zero;
@@ -44,7 +47,7 @@ module processor( input         clk, reset,
     wire branchBltControl;    
 
 
-    reg_32b registerSet ( instruction[19:15], data_to_mem[24:20], instruction[11:7], memToRegRes, clk, regWriteControl /*we3*/, rs1, writeData );
+    reg_32b registerSet ( instruction[19:15], data_to_mem[24:20], instruction[11:7], memToRegRes, clk, regWriteControl, rs1, writeData );
     imm_decode immediate_decoder ( immControl, instruction[31:7], immOp );
     alu_32b alu ( rs1, AluSrcOut, ALUControl, ALUOut, zero );
     
@@ -57,12 +60,12 @@ module processor( input         clk, reset,
         else
             immOpExpanded = { { 12 { 1'b0 } }, immOp };
 
-    adder_32b branchAdder ( immOpExpanded, program_counter, branchJalrMuxIn ); // expand immOP with zeros
+    adder_32b branchAdder ( immOpExpanded, PC_cable, branchJalrMuxIn );
 
     mux2_1_32b ALUSrc_mux ( ALUSrcControl, writeData, immOpExpanded, AluSrcOut );
     mux2_1_32b MemToReg_mux ( MemToRegControl, branchJalReturnAddr, readData, memToRegRes );
     wire branchOutcome = ( branchBeqControl & zero ) | branchJalControl | branchJalrControl | ( ALUOut & branchBltControl );
-    mux2_1_32b BranchOutcome_mux ( branchOutcome, PCPlus4, branchTarget, program_counter );
+    mux2_1_32b BranchOutcome_mux ( branchOutcome, PCPlus4, branchTarget, PC_cable );
     mux2_1_32b BranchJalAndJalr_mux ( branchJalControl | branchJalrControl, ALUOut, PCPlus4, branchJalReturnAddr );
     mux2_1_32b BranchJalr_mux ( branchJalrControl, branchJalrMuxIn, ALUOut, branchTarget );
 
