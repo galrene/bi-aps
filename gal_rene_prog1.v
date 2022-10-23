@@ -1,6 +1,6 @@
 `default_nettype none
 
-// todo: reset
+// todo: PC should be 6 bit?
 module processor( input         clk, reset,
                   output [31:0] PC,
                   input  [31:0] instruction,
@@ -9,15 +9,17 @@ module processor( input         clk, reset,
                   output [31:0] data_to_mem,
                   input  [31:0] data_from_mem
                 );
-    reg [31:0] program_counter;
     assign PC = program_counter;
-
-    wire [31:0] PC_cable = program_counter;
+    assign address_to_mem = ALUOut;
+    assign data_to_mem = writeData;
+    reg [31:0] program_counter;
+    wire [31:0] PC_cable;
 
     always @ ( posedge clk ) begin
-        PCPlus4 += 4;
+        PCPlus4 <= PCPlus4 + 4;
+        program_counter <= PC_cable;
     if ( reset )
-        program_counter = { 32 { 1'b0 } };
+        program_counter <= { 32 { 1'b0 } };
     end
     
     wire [31:0] rs1;
@@ -30,6 +32,8 @@ module processor( input         clk, reset,
     wire [31:0] memToRegRes;
     wire [31:0] AluSrcOut;
     reg [31:0] PCPlus4;
+    initial
+        PCPlus4 <= { 32 { 1'b0 } }; 
     wire [31:0] branchJalReturnAddr;
     wire [31:0] branchJalrMuxIn;
 
@@ -44,7 +48,7 @@ module processor( input         clk, reset,
     wire branchBeqControl;
     wire branchJalControl;
     wire branchJalrControl;
-    wire branchBltControl;    
+    wire branchBltControl;   
 
 
     reg_32b registerSet ( instruction[19:15], data_to_mem[24:20], instruction[11:7], memToRegRes, clk, regWriteControl, rs1, writeData );
@@ -56,9 +60,9 @@ module processor( input         clk, reset,
     // expands J type for 21 bits of immediate value
     always @ ( posedge clk )
         if ( branchJalControl | branchJalrControl )
-            immOpExpanded = { { 11 { 1'b0 } }, immOp, 1'b0 };
+            immOpExpanded <= { { 11 { 1'b0 } }, immOp, 1'b0 };
         else
-            immOpExpanded = { { 12 { 1'b0 } }, immOp };
+            immOpExpanded <= { { 12 { 1'b0 } }, immOp };
 
     adder_32b branchAdder ( immOpExpanded, PC_cable, branchJalrMuxIn );
 
@@ -69,7 +73,7 @@ module processor( input         clk, reset,
     mux2_1_32b BranchJalAndJalr_mux ( branchJalControl | branchJalrControl, ALUOut, PCPlus4, branchJalReturnAddr );
     mux2_1_32b BranchJalr_mux ( branchJalrControl, branchJalrMuxIn, ALUOut, branchTarget );
 
-    assign address_to_mem = ALUOut;
+    
 
 endmodule
 
