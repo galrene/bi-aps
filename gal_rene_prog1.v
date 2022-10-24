@@ -15,25 +15,23 @@ module processor( input         clk, reset,
     reg [31:0] program_counter;
     wire [31:0] PC_cable;
 
-    always @ ( posedge clk ) begin
-        PCPlus4 <= program_counter + 4;
+    always @ ( posedge clk )  begin
         program_counter <= PC_cable;
+        if ( reset )
+            program_counter <= { 32 { 1'b0 } };
     end
-    always @ ( reset )
-        program_counter <= { 32 { 1'b0 } };
+    assign PCPlus4 = program_counter + 3'b100;
     
     wire [31:0] rs1;
     wire [31:0] ALUOut;
     wire [31:0] immOp;
     wire zero;
     wire [31:0] writeData;
-    wire [31:0] readData;
+    wire [31:0] readData = data_from_mem;
     wire [31:0] branchTarget;
     wire [31:0] memToRegRes;
     wire [31:0] AluSrcOut;
-    reg [31:0] PCPlus4;
-    initial
-        PCPlus4 <= { 32 { 1'b0 } }; 
+    wire [31:0] PCPlus4;
     wire [31:0] branchJalReturnAddr;
     wire [31:0] branchJalrMuxIn;
 
@@ -51,7 +49,7 @@ module processor( input         clk, reset,
     wire branchBltControl;   
 
 
-    reg_32b registerSet ( instruction[19:15], data_to_mem[24:20], instruction[11:7], memToRegRes, clk, regWriteControl, rs1, writeData );
+    reg_32b registerSet ( instruction[19:15], instruction[24:20], instruction[11:7], memToRegRes, clk, regWriteControl, rs1, writeData );
     imm_decode immediate_decoder ( immControl, instruction[31:7], immOp );
     alu_32b alu ( rs1, AluSrcOut, ALUControl, ALUOut, zero );
     control_unit cu ( instruction,
@@ -65,11 +63,12 @@ module processor( input         clk, reset,
                       branchJalrControl,
                       branchBltControl );
 
-    adder_32b branchAdder ( immOp, program_counter, branchJalrMuxIn );
+    assign branchJalrMuxIn = immOp + program_counter; // branch adder
 
     mux2_1_32b ALUSrc_mux ( ALUSrcControl, writeData, immOp, AluSrcOut );
     mux2_1_32b MemToReg_mux ( MemToRegControl, branchJalReturnAddr, readData, memToRegRes );
     wire branchOutcome = ( branchBeqControl & zero ) | branchJalControl | branchJalrControl | ( ALUOut & branchBltControl );
+    // wire branchOutcome = 0;
     mux2_1_32b BranchOutcome_mux ( branchOutcome, PCPlus4, branchTarget, PC_cable );
     mux2_1_32b BranchJalAndJalr_mux ( branchJalControl | branchJalrControl, ALUOut, PCPlus4, branchJalReturnAddr );
     mux2_1_32b BranchJalr_mux ( branchJalrControl, branchJalrMuxIn, ALUOut, branchTarget );
@@ -111,31 +110,23 @@ module imm_decode ( input [2:0] i_type,
 
 
 endmodule
-
-module adder_32b ( input [31:0] a, b,
-                   output [31:0] res );
-    assign res = a + b;
-endmodule
-
+// po tom jak som toto prepisal sa to kompletne rozjebalo este viac na maderu
 module mux2_1_32b ( input sig, input [31:0] a, b,
                     output [31:0] out );
-        assign out = ( a & !sig ) | ( b & sig ) ;
+        assign out = sig ? b : a;
 endmodule
 
 module reg_32b ( input [4:0] a1, a2, a3,
                 input [31:0] wd3,
                 input clk, we3,
-                output reg [31:0] rd1, rd2 );
+                output [31:0] rd1, rd2 );
     
     reg [31:0] registers [31:0];
-    
-    always @ ( a1, a2 ) begin
-        rd1 <= registers[a1];
-        rd2 <= registers[a2];
-    end
+    assign rd1 = registers[a1];
+    assign rd2 = registers[a2];
 
     always @ ( posedge clk )
-        if ( we3 == 1 && a3 != 0)
+        if ( we3 && a3 != 0)
             registers[a3] <= wd3;
 
 endmodule
