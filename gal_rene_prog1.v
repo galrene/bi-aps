@@ -24,7 +24,7 @@ module processor( input         clk, reset,
     
     wire [31:0] rs1;
     wire [31:0] ALUOut;
-    wire [19:0] immOp;
+    wire [31:0] immOp;
     wire zero;
     wire [31:0] writeData;
     wire [31:0] readData;
@@ -56,17 +56,9 @@ module processor( input         clk, reset,
     alu_32b alu ( rs1, AluSrcOut, ALUControl, ALUOut, zero );
     
 
-    reg [31:0] immOpExpanded;
-    // expands J type for 21 bits of immediate value
-    always @ ( posedge clk )
-        if ( branchJalControl | branchJalrControl )
-            immOpExpanded <= { { 11 { 1'b0 } }, immOp, 1'b0 };
-        else
-            immOpExpanded <= { { 12 { 1'b0 } }, immOp };
+    adder_32b branchAdder ( immOp, PC_cable, branchJalrMuxIn );
 
-    adder_32b branchAdder ( immOpExpanded, PC_cable, branchJalrMuxIn );
-
-    mux2_1_32b ALUSrc_mux ( ALUSrcControl, writeData, immOpExpanded, AluSrcOut );
+    mux2_1_32b ALUSrc_mux ( ALUSrcControl, writeData, immOp, AluSrcOut );
     mux2_1_32b MemToReg_mux ( MemToRegControl, branchJalReturnAddr, readData, memToRegRes );
     wire branchOutcome = ( branchBeqControl & zero ) | branchJalControl | branchJalrControl | ( ALUOut & branchBltControl );
     mux2_1_32b BranchOutcome_mux ( branchOutcome, PCPlus4, branchTarget, PC_cable );
@@ -79,7 +71,7 @@ endmodule
 
 module imm_decode ( input [2:0] i_type,
                     input [31:7] imm_in,
-                    output reg [19:0] imm_out );
+                    output reg [31:0] imm_out );
     always @ ( * ) begin
         case ( i_type )
             3'b000: imm_out = 0; // R-type
@@ -95,12 +87,15 @@ module imm_decode ( input [2:0] i_type,
                 imm_out[4:1] = imm_in[11:8];
             end
 
-            3'b100: imm_out[19:0] = imm_in[31:12]; // U-type
-            3'b101: begin // J-type, shifted 1 bit to the right
-                    imm_out[19] = imm_in[31];
-                    imm_out[9:0] = imm_in[30:21];
-                    imm_out[10] = imm_in[20];
-                    imm_out[18:11] = imm_in[19:12];
+            3'b100: begin // U-type
+                imm_out[31:12] = imm_in[31:12]; 
+                imm_out[11:0] = { 12 { 1'b0 } };
+            end
+            3'b101: begin // J-type
+                    imm_out[20] = imm_in[31];
+                    imm_out[10:1] = imm_in[30:21];
+                    imm_out[1] = imm_in[20];
+                    imm_out[19:12] = imm_in[19:12];
             end
         endcase
     end
