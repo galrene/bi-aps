@@ -20,7 +20,7 @@ void arePrimes ( int arr [], int size ) {
 }
 
 int main ( void ) {
-    int arr [] = { 2, 3, 5, 7, 14, 573489 };
+    int arr [] = { -5, 1, 0, 7, 14, 573489 };
     int arrSize = 6;
     arePrimes ( arr, arrSize );
     return 0;

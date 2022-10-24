@@ -14,6 +14,8 @@ main:
 
 end:
 	jal, zero, end
+#----------------------------------------------------------------
+# Check if number at address a2 is prime, set a2 to 1 (prime) or 0 (not prime)
 # a2 = number address
 isPrime:
 	# i upper bound = a4
@@ -36,6 +38,7 @@ isPrime:
 		sw zero, 0(a2) # *a2 = 0
 		jalr zero, ra, 0
 #----------------------------------------------------------------
+# Check if a1-numbers at address a2 are prime, set the respective values to 1 (prime) or 0 (not prime)
 # a1 = arr size
 # a2 = arr begin
 prime:
