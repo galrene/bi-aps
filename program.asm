@@ -1,19 +1,19 @@
-.data
-.align 2
-
-array:
-.word 2, 3, 8, 5, 7
-
-.text
+# .data
+# .align 2
+# size:
+# .word 5
+# array:
+# .word 2, 3, 8, 5, 7
+# .text
 
 #----------------------------------------------------------------
 main:
-	addi a1, zero, 5 # arr_size
-	la a2, array # arr begin
+	lw a1, 0x0 # arr_size
+	addi a2, zero, 0x4 # arr begin
 	jal ra, prime
 
-inf_loop:
-	jal, zero, inf_loop
+end:
+	jal, zero, end
 # a2 = number address
 isPrime:
 	# i upper bound = a4
