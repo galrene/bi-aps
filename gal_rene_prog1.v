@@ -68,7 +68,6 @@ module processor( input         clk, reset,
     mux2_1_32b ALUSrc_mux ( ALUSrcControl, writeData, immOp, AluSrcOut );
     mux2_1_32b MemToReg_mux ( MemToRegControl, branchJalReturnAddr, readData, memToRegRes );
     wire branchOutcome = ( branchBeqControl & zero ) | branchJalControl | branchJalrControl | ( ALUOut & branchBltControl );
-    // wire branchOutcome = 0;
     mux2_1_32b BranchOutcome_mux ( branchOutcome, PCPlus4, branchTarget, PC_cable );
     mux2_1_32b BranchJalAndJalr_mux ( branchJalControl | branchJalrControl, ALUOut, PCPlus4, branchJalReturnAddr );
     mux2_1_32b BranchJalr_mux ( branchJalrControl, branchJalrMuxIn, ALUOut, branchTarget );
@@ -83,16 +82,22 @@ module imm_decode ( input [2:0] i_type,
     always @ ( * ) begin
         case ( i_type )
             3'b000: imm_out = 0; // R-type
-            3'b001: imm_out [11:0] = imm_in[31:20]; // I-type
+            3'b001: begin
+                imm_out[11:0] = imm_in[31:20]; // I-type
+                imm_out[31:12] = { 20 { imm_in[31] } }; // sign extension
+            end
             3'b010: begin // S-type
                 imm_out[11:5] = imm_in[31:25]; 
                 imm_out[4:0] = imm_in[11:7];
+                imm_out[31:12] = { 20 { imm_in[31] } }; // sign extension
             end
             3'b011: begin // B-type
                 imm_out[12] = imm_in[31];
-                imm_out[11] = imm_in[7];
                 imm_out[10:5] = imm_in[30:25];
+                imm_out[11] = imm_in[7];
                 imm_out[4:1] = imm_in[11:8];
+                imm_out[0] = 0;
+                imm_out[31:13] = { 19 { imm_in[31] } }; // sign extension
             end
 
             3'b100: begin // U-type
@@ -100,17 +105,18 @@ module imm_decode ( input [2:0] i_type,
                 imm_out[11:0] = { 12 { 1'b0 } };
             end
             3'b101: begin // J-type
+                    imm_out[31:21] = { 11 { imm_in[31] } }; // sign extension
                     imm_out[20] = imm_in[31];
                     imm_out[10:1] = imm_in[30:21];
-                    imm_out[1] = imm_in[20];
+                    imm_out[11] = imm_in[20];
                     imm_out[19:12] = imm_in[19:12];
+                    imm_out[0] = 0;
             end
         endcase
     end
 
 
 endmodule
-// po tom jak som toto prepisal sa to kompletne rozjebalo este viac na maderu
 module mux2_1_32b ( input sig, input [31:0] a, b,
                     output [31:0] out );
         assign out = sig ? b : a;
@@ -120,8 +126,9 @@ module reg_32b ( input [4:0] a1, a2, a3,
                 input [31:0] wd3,
                 input clk, we3,
                 output [31:0] rd1, rd2 );
-    
     reg [31:0] registers [31:0];
+    initial registers[0] = 0;
+
     assign rd1 = registers[a1];
     assign rd2 = registers[a2];
 

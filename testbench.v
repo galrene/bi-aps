@@ -7,7 +7,7 @@ module testbench();
 	top simulated_system (clk, reset, data_to_mem, address_to_mem, write_enable);
 
 	initial	begin
-		$dumpfile("test");
+		$dumpfile("test.out");
 		$dumpvars;
 		reset<=1; # 2; reset<=0;
 		$writememh ("memfile_data_after_simulation.hex",simulated_system.dmem.RAM,0,63);
