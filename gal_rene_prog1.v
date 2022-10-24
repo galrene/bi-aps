@@ -9,18 +9,18 @@ module processor( input         clk, reset,
                   output [31:0] data_to_mem,
                   input  [31:0] data_from_mem
                 );
-    assign PC = program_counter;
     assign address_to_mem = ALUOut;
     assign data_to_mem = writeData;
+    assign PC = program_counter;
     reg [31:0] program_counter;
     wire [31:0] PC_cable;
 
     always @ ( posedge clk ) begin
-        PCPlus4 <= PCPlus4 + 4;
+        PCPlus4 <= program_counter + 4;
         program_counter <= PC_cable;
-    if ( reset )
-        program_counter <= { 32 { 1'b0 } };
     end
+    always @ ( reset )
+        program_counter <= { 32 { 1'b0 } };
     
     wire [31:0] rs1;
     wire [31:0] ALUOut;
@@ -54,9 +54,18 @@ module processor( input         clk, reset,
     reg_32b registerSet ( instruction[19:15], data_to_mem[24:20], instruction[11:7], memToRegRes, clk, regWriteControl, rs1, writeData );
     imm_decode immediate_decoder ( immControl, instruction[31:7], immOp );
     alu_32b alu ( rs1, AluSrcOut, ALUControl, ALUOut, zero );
-    
+    control_unit cu ( instruction,
+                      immControl, ALUControl, 
+                      memWriteControl,
+                      regWriteControl,
+                      ALUSrcControl,
+                      MemToRegControl,
+                      branchBeqControl,
+                      branchJalControl,
+                      branchJalrControl,
+                      branchBltControl );
 
-    adder_32b branchAdder ( immOp, PC_cable, branchJalrMuxIn );
+    adder_32b branchAdder ( immOp, program_counter, branchJalrMuxIn );
 
     mux2_1_32b ALUSrc_mux ( ALUSrcControl, writeData, immOp, AluSrcOut );
     mux2_1_32b MemToReg_mux ( MemToRegControl, branchJalReturnAddr, readData, memToRegRes );
@@ -121,13 +130,13 @@ module reg_32b ( input [4:0] a1, a2, a3,
     reg [31:0] registers [31:0];
     
     always @ ( a1, a2 ) begin
-        rd1 = registers[a1];
-        rd2 = registers[a2];
+        rd1 <= registers[a1];
+        rd2 <= registers[a2];
     end
 
     always @ ( posedge clk )
         if ( we3 == 1 && a3 != 0)
-            registers[a3] = wd3;
+            registers[a3] <= wd3;
 
 endmodule
 
@@ -145,7 +154,6 @@ module alu_32b ( input [31:0] srcA, srcB,
             3'b011: ALUResult = srcA < srcB ? 1 : 0; // slt
             3'b100: ALUResult = srcA / srcB;
             3'b101: ALUResult = srcA % srcB;
-            3'b110: ALUResult = { srcB[31:12], { 12 { 1'b0 } } } ; // lui
             3'b111: ALUResult = srcA | srcB;
         endcase
     
@@ -336,7 +344,19 @@ module control_unit ( input [31:0]      instruction,
                 branchJalrControl = 0;
                 branchBltControl = 0;
             end
-            7'b0110111: begin // U-type: lui
+            7'b0110111: begin // lui
+                immControl = 3'b100;
+                ALUControl = 3'b000;
+                memWriteControl = 0;
+                regWriteControl = 1;
+                ALUSrcControl = 1;
+                MemToRegControl = 1;
+                branchBeqControl = 0;
+                branchJalControl = 0;
+                branchJalrControl = 0;
+                branchBltControl = 0;
+            end
+            7'b0010111: begin // auipc
                 immControl = 3'b100;
                 ALUControl = 3'b110;
                 memWriteControl = 0;

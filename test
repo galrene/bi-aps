@@ -1,5 +1,5 @@
 $date
-	Sun Oct 23 13:23:24 2022
+	Mon Oct 24 17:32:40 2022
 $end
 $version
 	Icarus Verilog
@@ -7,597 +7,435 @@ $end
 $timescale
 	1s
 $end
-$scope module control_unit $end
-$var wire 32 ! instruction [31:0] $end
-$var wire 7 " opcode [6:0] $end
-$var wire 7 # funct7 [31:25] $end
-$var wire 3 $ funct3 [14:12] $end
-$var reg 3 % ALUControl [2:0] $end
-$var reg 1 & ALUSrcControl $end
-$var reg 1 ' MemToRegControl $end
-$var reg 1 ( branchBeqControl $end
-$var reg 1 ) branchBltControl $end
-$var reg 1 * branchJalControl $end
-$var reg 1 + branchJalrControl $end
-$var reg 3 , immControl [2:0] $end
-$var reg 1 - memWriteControl $end
-$var reg 1 . regWriteControl $end
-$upscope $end
 $scope module testbench $end
-$var wire 1 / write_enable $end
-$var wire 32 0 data_to_mem [31:0] $end
-$var wire 32 1 address_to_mem [31:0] $end
-$var reg 1 2 clk $end
-$var reg 1 3 reset $end
+$var wire 1 ! write_enable $end
+$var wire 32 " data_to_mem [31:0] $end
+$var wire 32 # address_to_mem [31:0] $end
+$var reg 1 $ clk $end
+$var reg 1 % reset $end
 $scope module simulated_system $end
-$var wire 1 2 clk $end
-$var wire 1 3 reset $end
-$var wire 1 / write_enable $end
-$var wire 32 4 pc [31:0] $end
-$var wire 32 5 instruction [31:0] $end
-$var wire 32 6 data_to_mem [31:0] $end
-$var wire 32 7 data_from_mem [31:0] $end
-$var wire 32 8 address_to_mem [31:0] $end
+$var wire 1 $ clk $end
+$var wire 1 % reset $end
+$var wire 1 ! write_enable $end
+$var wire 32 & pc [31:0] $end
+$var wire 32 ' instruction [31:0] $end
+$var wire 32 ( data_to_mem [31:0] $end
+$var wire 32 ) data_from_mem [31:0] $end
+$var wire 32 * address_to_mem [31:0] $end
 $scope module CPU $end
-$var wire 3 9 ALUControl [2:0] $end
-$var wire 1 : ALUSrcControl $end
-$var wire 1 ; MemToRegControl $end
-$var wire 1 / WE $end
-$var wire 32 < address_to_mem [31:0] $end
-$var wire 1 = branchBeqControl $end
-$var wire 1 > branchBltControl $end
-$var wire 1 ? branchJalControl $end
-$var wire 1 @ branchJalrControl $end
-$var wire 1 2 clk $end
-$var wire 32 A data_to_mem [31:0] $end
-$var wire 3 B immControl [2:0] $end
-$var wire 1 C memWriteControl $end
-$var wire 32 D readData [31:0] $end
-$var wire 1 E regWriteControl $end
-$var wire 1 3 reset $end
-$var wire 1 F zero $end
-$var wire 32 G writeData [31:0] $end
-$var wire 32 H rs1 [31:0] $end
-$var wire 32 I memToRegRes [31:0] $end
-$var wire 32 J instruction [31:0] $end
-$var wire 20 K immOp [19:0] $end
-$var wire 32 L data_from_mem [31:0] $end
-$var wire 32 M branchTarget [31:0] $end
-$var wire 1 N branchOutcome $end
-$var wire 32 O branchJalrMuxIn [31:0] $end
-$var wire 32 P branchJalReturnAddr [31:0] $end
-$var wire 32 Q PC_cable [31:0] $end
-$var wire 32 R PC [31:0] $end
-$var wire 32 S AluSrcOut [31:0] $end
-$var wire 32 T ALUOut [31:0] $end
-$var reg 32 U PCPlus4 [31:0] $end
-$var reg 32 V immOpExpanded [31:0] $end
-$var reg 32 W program_counter [31:0] $end
+$var wire 32 + PC [31:0] $end
+$var wire 1 ! WE $end
+$var wire 32 , address_to_mem [31:0] $end
+$var wire 1 $ clk $end
+$var wire 32 - data_to_mem [31:0] $end
+$var wire 32 . readData [31:0] $end
+$var wire 1 % reset $end
+$var wire 1 / zero $end
+$var wire 32 0 writeData [31:0] $end
+$var wire 32 1 rs1 [31:0] $end
+$var wire 1 2 regWriteControl $end
+$var wire 1 3 memWriteControl $end
+$var wire 32 4 memToRegRes [31:0] $end
+$var wire 32 5 instruction [31:0] $end
+$var wire 32 6 immOp [31:0] $end
+$var wire 3 7 immControl [2:0] $end
+$var wire 32 8 data_from_mem [31:0] $end
+$var wire 32 9 branchTarget [31:0] $end
+$var wire 1 : branchOutcome $end
+$var wire 32 ; branchJalrMuxIn [31:0] $end
+$var wire 1 < branchJalrControl $end
+$var wire 32 = branchJalReturnAddr [31:0] $end
+$var wire 1 > branchJalControl $end
+$var wire 1 ? branchBltControl $end
+$var wire 1 @ branchBeqControl $end
+$var wire 32 A PC_cable [31:0] $end
+$var wire 1 B MemToRegControl $end
+$var wire 32 C AluSrcOut [31:0] $end
+$var wire 1 D ALUSrcControl $end
+$var wire 32 E ALUOut [31:0] $end
+$var wire 3 F ALUControl [2:0] $end
+$var reg 32 G PCPlus4 [31:0] $end
+$var reg 32 H program_counter [31:0] $end
 $scope module ALUSrc_mux $end
-$var wire 32 X b [31:0] $end
-$var wire 32 Y out [31:0] $end
-$var wire 1 : sig $end
-$var wire 32 Z a [31:0] $end
+$var wire 32 I out [31:0] $end
+$var wire 1 D sig $end
+$var wire 32 J b [31:0] $end
+$var wire 32 K a [31:0] $end
 $upscope $end
 $scope module BranchJalAndJalr_mux $end
-$var wire 32 [ b [31:0] $end
-$var wire 32 \ out [31:0] $end
-$var wire 1 ] sig $end
-$var wire 32 ^ a [31:0] $end
+$var wire 32 L b [31:0] $end
+$var wire 32 M out [31:0] $end
+$var wire 1 N sig $end
+$var wire 32 O a [31:0] $end
 $upscope $end
 $scope module BranchJalr_mux $end
-$var wire 32 _ out [31:0] $end
-$var wire 1 @ sig $end
-$var wire 32 ` b [31:0] $end
-$var wire 32 a a [31:0] $end
+$var wire 32 P out [31:0] $end
+$var wire 1 < sig $end
+$var wire 32 Q b [31:0] $end
+$var wire 32 R a [31:0] $end
 $upscope $end
 $scope module BranchOutcome_mux $end
-$var wire 32 b a [31:0] $end
-$var wire 32 c b [31:0] $end
-$var wire 32 d out [31:0] $end
-$var wire 1 N sig $end
+$var wire 32 S a [31:0] $end
+$var wire 32 T b [31:0] $end
+$var wire 32 U out [31:0] $end
+$var wire 1 : sig $end
 $upscope $end
 $scope module MemToReg_mux $end
-$var wire 32 e a [31:0] $end
-$var wire 32 f b [31:0] $end
-$var wire 32 g out [31:0] $end
-$var wire 1 ; sig $end
+$var wire 32 V a [31:0] $end
+$var wire 32 W b [31:0] $end
+$var wire 32 X out [31:0] $end
+$var wire 1 B sig $end
 $upscope $end
 $scope module alu $end
-$var wire 3 h ALUControl [2:0] $end
-$var wire 32 i srcB [31:0] $end
-$var wire 32 j srcA [31:0] $end
-$var reg 32 k ALUResult [31:0] $end
-$var reg 1 F zero $end
+$var wire 32 Y srcB [31:0] $end
+$var wire 32 Z srcA [31:0] $end
+$var wire 3 [ ALUControl [2:0] $end
+$var reg 32 \ ALUResult [31:0] $end
+$var reg 1 / zero $end
 $upscope $end
 $scope module branchAdder $end
-$var wire 32 l a [31:0] $end
-$var wire 32 m b [31:0] $end
-$var wire 32 n res [31:0] $end
+$var wire 32 ] b [31:0] $end
+$var wire 32 ^ res [31:0] $end
+$var wire 32 _ a [31:0] $end
+$upscope $end
+$scope module cu $end
+$var wire 7 ` opcode [6:0] $end
+$var wire 32 a instruction [31:0] $end
+$var wire 7 b funct7 [31:25] $end
+$var wire 3 c funct3 [14:12] $end
+$var reg 3 d ALUControl [2:0] $end
+$var reg 1 D ALUSrcControl $end
+$var reg 1 B MemToRegControl $end
+$var reg 1 @ branchBeqControl $end
+$var reg 1 ? branchBltControl $end
+$var reg 1 > branchJalControl $end
+$var reg 1 < branchJalrControl $end
+$var reg 3 e immControl [2:0] $end
+$var reg 1 3 memWriteControl $end
+$var reg 1 2 regWriteControl $end
 $upscope $end
 $scope module immediate_decoder $end
-$var wire 3 o i_type [2:0] $end
-$var wire 25 p imm_in [31:7] $end
-$var reg 20 q imm_out [19:0] $end
+$var wire 3 f i_type [2:0] $end
+$var wire 25 g imm_in [31:7] $end
+$var reg 32 h imm_out [31:0] $end
 $upscope $end
 $scope module registerSet $end
-$var wire 5 r a1 [4:0] $end
-$var wire 5 s a2 [4:0] $end
-$var wire 5 t a3 [4:0] $end
-$var wire 1 2 clk $end
-$var wire 32 u wd3 [31:0] $end
-$var wire 1 E we3 $end
-$var reg 32 v rd1 [31:0] $end
-$var reg 32 w rd2 [31:0] $end
+$var wire 5 i a1 [4:0] $end
+$var wire 5 j a2 [4:0] $end
+$var wire 5 k a3 [4:0] $end
+$var wire 1 $ clk $end
+$var wire 32 l wd3 [31:0] $end
+$var wire 1 2 we3 $end
+$var reg 32 m rd1 [31:0] $end
+$var reg 32 n rd2 [31:0] $end
 $upscope $end
 $upscope $end
 $scope module dmem $end
-$var wire 32 x address [31:0] $end
-$var wire 1 2 clk $end
-$var wire 32 y rd [31:0] $end
-$var wire 32 z wd [31:0] $end
-$var wire 1 / we $end
+$var wire 32 o address [31:0] $end
+$var wire 1 $ clk $end
+$var wire 32 p rd [31:0] $end
+$var wire 32 q wd [31:0] $end
+$var wire 1 ! we $end
 $upscope $end
 $scope module imem $end
-$var wire 6 { address [5:0] $end
-$var wire 32 | rd [31:0] $end
+$var wire 6 r address [5:0] $end
+$var wire 32 s rd [31:0] $end
 $upscope $end
 $upscope $end
 $upscope $end
 $enddefinitions $end
 #0
 $dumpvars
-b101000000000001100010011 |
-b0 {
-bx z
-bx y
-bx x
-bx w
-bx v
-b0x u
-b110 t
-bx s
+b101000000000001100010011 s
 b0 r
 bx q
-b10100000000000110 p
-bz o
+bx p
+bx o
 bx n
-b0x m
-b0xxxxxxxxxxxxxxxxxxxx l
-bx k
+bx m
+b0x l
+b110 k
 bx j
-b0x i
-bz h
-b0x g
-bz f
-b0x e
-b0x d
-b0x c
-b100 b
-bx a
-bx `
-b0x _
+b0 i
+bx000000001010 h
+b10100000000000110 g
+b1 f
+b1 e
+b0 d
+b0 c
+b0 b
+b101000000000001100010011 a
+b10011 `
+bx000000001010 _
 bx ^
-x]
-b0x \
-b100 [
+b0x ]
+bx \
+b0 [
 bx Z
-b0x Y
-b0xxxxxxxxxxxxxxxxxxxx X
-b0 W
-b0xxxxxxxxxxxxxxxxxxxx V
-b100 U
-bx T
-b0x S
-b0 R
-b0x Q
+b0 Y
+b0x X
+bz W
+b0x V
+b0x U
+b0x T
+bx S
+bx R
+bx Q
 b0x P
 bx O
-xN
+0N
 b0x M
 bx L
 bx K
-b101000000000001100010011 J
-b0x I
-bx H
+bx000000001010 J
+b0 I
+b0x H
 bx G
-xF
-zE
-bz D
-zC
-bz B
-bx A
-z@
-z?
-z>
-z=
-bx <
-z;
-z:
-bz 9
+b0 F
+bx E
+1D
+b0 C
+0B
+b0x A
+0@
+0?
+0>
+b0x =
+0<
+bx ;
+0:
+b0x 9
 bx 8
-bx 7
-bx 6
+b1 7
+bx000000001010 6
 b101000000000001100010011 5
-b0 4
-13
+b0x 4
+03
 12
 bx 1
 bx 0
-z/
-x.
-x-
+x/
+bz .
+bx -
 bx ,
-x+
-x*
-x)
-x(
-x'
-x&
-bx %
-bz $
-bz #
-bz "
-bz !
+b0x +
+bx *
+bx )
+bx (
+b101000000000001100010011 '
+b0x &
+1%
+1$
+bx #
+bx "
+0!
 $end
 #1
-02
+0$
 #2
-b0x 4
-b0x R
-b0x W
-b1000 U
-b1000 [
-b1000 b
-12
-03
+b0x &
+b0x +
+b0x H
+b0x ]
+1$
+0%
 #3
-02
+0$
 #4
-b1100 U
-b1100 [
-b1100 b
-12
+1$
 #5
-02
+0$
 #6
-b10000 U
-b10000 [
-b10000 b
-12
+1$
 #7
-02
+0$
 #8
-b10100 U
-b10100 [
-b10100 b
-12
+1$
 #9
-02
+0$
 #10
-b11000 U
-b11000 [
-b11000 b
-12
+1$
 #11
-02
+0$
 #12
-b11100 U
-b11100 [
-b11100 b
-12
+1$
 #13
-02
+0$
 #14
-b100000 U
-b100000 [
-b100000 b
-12
+1$
 #15
-02
+0$
 #16
-b100100 U
-b100100 [
-b100100 b
-12
+1$
 #17
-02
+0$
 #18
-b101000 U
-b101000 [
-b101000 b
-12
+1$
 #19
-02
+0$
 #20
-b101100 U
-b101100 [
-b101100 b
-12
+1$
 #21
-02
+0$
 #22
-b110000 U
-b110000 [
-b110000 b
-12
+1$
 #23
-02
+0$
 #24
-b110100 U
-b110100 [
-b110100 b
-12
+1$
 #25
-02
+0$
 #26
-b111000 U
-b111000 [
-b111000 b
-12
+1$
 #27
-02
+0$
 #28
-b111100 U
-b111100 [
-b111100 b
-12
+1$
 #29
-02
+0$
 #30
-b1000000 U
-b1000000 [
-b1000000 b
-12
+1$
 #31
-02
+0$
 #32
-b1000100 U
-b1000100 [
-b1000100 b
-12
+1$
 #33
-02
+0$
 #34
-b1001000 U
-b1001000 [
-b1001000 b
-12
+1$
 #35
-02
+0$
 #36
-b1001100 U
-b1001100 [
-b1001100 b
-12
+1$
 #37
-02
+0$
 #38
-b1010000 U
-b1010000 [
-b1010000 b
-12
+1$
 #39
-02
+0$
 #40
-b1010100 U
-b1010100 [
-b1010100 b
-12
+1$
 #41
-02
+0$
 #42
-b1011000 U
-b1011000 [
-b1011000 b
-12
+1$
 #43
-02
+0$
 #44
-b1011100 U
-b1011100 [
-b1011100 b
-12
+1$
 #45
-02
+0$
 #46
-b1100000 U
-b1100000 [
-b1100000 b
-12
+1$
 #47
-02
+0$
 #48
-b1100100 U
-b1100100 [
-b1100100 b
-12
+1$
 #49
-02
+0$
 #50
-b1101000 U
-b1101000 [
-b1101000 b
-12
+1$
 #51
-02
+0$
 #52
-b1101100 U
-b1101100 [
-b1101100 b
-12
+1$
 #53
-02
+0$
 #54
-b1110000 U
-b1110000 [
-b1110000 b
-12
+1$
 #55
-02
+0$
 #56
-b1110100 U
-b1110100 [
-b1110100 b
-12
+1$
 #57
-02
+0$
 #58
-b1111000 U
-b1111000 [
-b1111000 b
-12
+1$
 #59
-02
+0$
 #60
-b1111100 U
-b1111100 [
-b1111100 b
-12
+1$
 #61
-02
+0$
 #62
-b10000000 U
-b10000000 [
-b10000000 b
-12
+1$
 #63
-02
+0$
 #64
-b10000100 U
-b10000100 [
-b10000100 b
-12
+1$
 #65
-02
+0$
 #66
-b10001000 U
-b10001000 [
-b10001000 b
-12
+1$
 #67
-02
+0$
 #68
-b10001100 U
-b10001100 [
-b10001100 b
-12
+1$
 #69
-02
+0$
 #70
-b10010000 U
-b10010000 [
-b10010000 b
-12
+1$
 #71
-02
+0$
 #72
-b10010100 U
-b10010100 [
-b10010100 b
-12
+1$
 #73
-02
+0$
 #74
-b10011000 U
-b10011000 [
-b10011000 b
-12
+1$
 #75
-02
+0$
 #76
-b10011100 U
-b10011100 [
-b10011100 b
-12
+1$
 #77
-02
+0$
 #78
-b10100000 U
-b10100000 [
-b10100000 b
-12
+1$
 #79
-02
+0$
 #80
-b10100100 U
-b10100100 [
-b10100100 b
-12
+1$
 #81
-02
+0$
 #82
-b10101000 U
-b10101000 [
-b10101000 b
-12
+1$
 #83
-02
+0$
 #84
-b10101100 U
-b10101100 [
-b10101100 b
-12
+1$
 #85
-02
+0$
 #86
-b10110000 U
-b10110000 [
-b10110000 b
-12
+1$
 #87
-02
+0$
 #88
-b10110100 U
-b10110100 [
-b10110100 b
-12
+1$
 #89
-02
+0$
 #90
-b10111000 U
-b10111000 [
-b10111000 b
-12
+1$
 #91
-02
+0$
 #92
-b10111100 U
-b10111100 [
-b10111100 b
-12
+1$
 #93
-02
+0$
 #94
-b11000000 U
-b11000000 [
-b11000000 b
-12
+1$
 #95
-02
+0$
 #96
-b11000100 U
-b11000100 [
-b11000100 b
-12
+1$
 #97
-02
+0$
 #98
-b11001000 U
-b11001000 [
-b11001000 b
-12
+1$
 #99
-02
+0$
 #100
-b11001100 U
-b11001100 [
-b11001100 b
-12
+1$
 #101
-02
+0$
 #102
-b11010000 U
-b11010000 [
-b11010000 b
-12
+1$
