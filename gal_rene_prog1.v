@@ -264,9 +264,9 @@ module control_unit ( input [31:0]      instruction,
                         branchJalrControl = 0;
                         branchBltControl = 0;
                     end
-                    3'b110: begin // or
+                    3'b110: begin // rem
                         immControl = 3'b000;
-                        ALUControl = 3'b111;
+                        ALUControl = 3'b101;
                         memWriteControl = 0;
                         regWriteControl = 1;
                         ALUSrcControl = 0;
