@@ -1,6 +1,7 @@
 `default_nettype none
 
-// todo: PC should be 6 bit?
+/*
+*/
 module processor( input         clk, reset,
                   output [31:0] PC,
                   input  [31:0] instruction,
@@ -99,7 +100,6 @@ module imm_decode ( input [2:0] i_type,
                 imm_out[0] = 0;
                 imm_out[31:13] = { 19 { imm_in[31] } }; // sign extension
             end
-
             3'b100: begin // U-type
                 imm_out[31:12] = imm_in[31:12]; 
                 imm_out[11:0] = { 12 { 1'b0 } };
@@ -210,7 +210,7 @@ module control_unit ( input [31:0]      instruction,
             end
             7'b0100011: begin  // S-type
                 case ( funct3 )
-                    3'b000: begin // sw
+                    3'b010: begin // sw
                         immControl = 3'b010;
                         ALUControl = 3'b000;
                         memWriteControl = 1;
