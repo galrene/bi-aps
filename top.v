@@ -23,8 +23,10 @@ module data_mem (input clk, we,
 	assign rd=RAM[address[31:2]]; // word aligned
 
 	always @ (posedge clk)
-		if (we)
+		if (we) begin
 			RAM[address[31:2]]<=wd;
+			$display (wd);
+		end
 endmodule
 
 //-------------------------------------------------------------------

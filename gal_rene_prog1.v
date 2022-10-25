@@ -215,7 +215,7 @@ module control_unit ( input [31:0]      instruction,
                         ALUControl = 3'b000;
                         memWriteControl = 1;
                         regWriteControl = 0;
-                        ALUSrcControl = 0;
+                        ALUSrcControl = 1;
                         MemToRegControl = 1;
                         branchBeqControl = 0;
                         branchJalControl = 0;
