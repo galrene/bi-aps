@@ -10,8 +10,8 @@ module testbench();
 		$dumpfile("test.out");
 		$dumpvars;
 		reset<=1; # 2; reset<=0;
+		#500;
 		$writememh ("memfile_data_after_simulation.hex",simulated_system.dmem.RAM,0,63);
-		#100;
 		$finish;
 	end
 

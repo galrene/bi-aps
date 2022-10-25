@@ -1,10 +1,10 @@
- .data
- .align 2
- size:
- .word 5
- array:
- .word 2, 3, 8, 5, 7
- .text
+;  .data
+;  .align 2
+;  size:
+;  .word 5
+;  array:
+;  .word 2, 3, 8, 5, 7
+;  .text
 
 #----------------------------------------------------------------
 main:
