@@ -35,6 +35,7 @@ module processor( input         clk, reset,
     wire [31:0] PCPlus4;
     wire [31:0] branchJalReturnAddr;
     wire [31:0] branchJalrMuxIn;
+    wire [31:0] srcACable;
 
     /* Control signals */
     wire [2:0] ALUControl;
@@ -48,11 +49,12 @@ module processor( input         clk, reset,
     wire branchJalControl;
     wire branchJalrControl;
     wire branchBltControl;   
+    wire auiControl;
 
 
     reg_32b registerSet ( instruction[19:15], instruction[24:20], instruction[11:7], memToRegRes, clk, regWriteControl, rs1, writeData );
     imm_decode immediate_decoder ( immControl, instruction[31:7], immOp );
-    alu_32b alu ( rs1, AluSrcOut, ALUControl, ALUOut, zero );
+    alu_32b alu ( srcACable, AluSrcOut, ALUControl, ALUOut, zero );
     control_unit cu ( instruction,
                       immControl, ALUControl, 
                       memWriteControl,
@@ -72,9 +74,9 @@ module processor( input         clk, reset,
     mux2_1_32b BranchOutcome_mux ( branchOutcome, PCPlus4, branchTarget, PC_cable );
     mux2_1_32b BranchJalAndJalr_mux ( branchJalControl | branchJalrControl, ALUOut, PCPlus4, branchJalReturnAddr );
     mux2_1_32b BranchJalr_mux ( branchJalrControl, branchJalrMuxIn, ALUOut, branchTarget );
+    mux2_1_32b aui_mux ( auiControl, rs1, writeData, srcACable );
 
     
-
 endmodule
 
 module imm_decode ( input [2:0] i_type,
@@ -144,7 +146,6 @@ module alu_32b ( input [31:0] srcA, srcB,
                  output reg zero );
     
     always @ (*) begin
-
         case ( ALUControl )
             3'b000: ALUResult = srcA + srcB;
             3'b001: ALUResult = srcA - srcB;
@@ -227,7 +228,7 @@ module control_unit ( input [31:0]      instruction,
             7'b0110011: begin // R-type
                 case ( funct3 )
                     3'b000: case ( funct7 )
-                            7'b0000000: begin
+                            7'b0000000: begin // add
                                 immControl = 3'b000;
                                 ALUControl = 3'b000;
                                 memWriteControl = 0;
@@ -239,7 +240,7 @@ module control_unit ( input [31:0]      instruction,
                                 branchJalrControl = 0;
                                 branchBltControl = 0;
                             end
-                            7'b0100000: begin
+                            7'b0100000: begin // sub
                                 immControl = 3'b000;
                                 ALUControl = 3'b001;
                                 memWriteControl = 0;
@@ -356,15 +357,16 @@ module control_unit ( input [31:0]      instruction,
             end
             7'b0010111: begin // auipc
                 immControl = 3'b100;
-                ALUControl = 3'b110;
+                ALUControl = 3'b000;
                 memWriteControl = 0;
                 regWriteControl = 1;
                 ALUSrcControl = 1;
-                MemToRegControl = 0;
+                MemToRegControl = 1;
                 branchBeqControl = 0;
                 branchJalControl = 0;
                 branchJalrControl = 0;
                 branchBltControl = 0;
+                auiControl = 1;
             end
             endcase
         end
