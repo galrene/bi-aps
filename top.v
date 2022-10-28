@@ -37,7 +37,7 @@ module inst_mem (input  [6:0]  address,
 	reg [31:0] RAM[127:0];
 	initial begin
 		// $readmemh ("memfile_inst.hex",RAM,0,63);
-		// $readmemh ("testprog.hex",RAM,0,63);
+		// $readmemh ("v2.hex",RAM,0,63);
 		$readmemh ("myTest.hex",RAM,0,127);
 	end
 	assign rd=RAM[address]; // word aligned

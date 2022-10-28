@@ -1,10 +1,10 @@
-;  .data
-;  .align 2
-;  size:
-;  .word 5
-;  array:
-;  .word 2, 3, 8, 5, 7
-;  .text
+#  .data
+#  .align 2
+#  size:
+#  .word 5
+#  array:
+#  .word 2, 3, 8, 5, 7
+#  .text
 
 #----------------------------------------------------------------
 main:
@@ -20,7 +20,7 @@ end:
 isPrime:
 	# i upper bound = a4
 	lw a4, 0(a2) # int a4 = *a2
-	addi t1, zero, 2 # i = 2
+	addi t1, zero, 2 # i = 3
 	loop_isPrime:
 		beq a4, t1, end_prime # if i == num
 

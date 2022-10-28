@@ -139,10 +139,8 @@ module reg_32b ( input [4:0] a1, a2, a3,
     assign rd2 = registers[a2];
 
     always @ ( posedge clk )
-        if ( we3 && a3 != 0 ) begin
+        if ( we3 && a3 != 0 )
             registers[a3] <= wd3;
-        $display ( "writing data: %d to %d", wd3, a3 );
-        end
 endmodule
 
 module alu_32b ( input signed [31:0] srcA, srcB,
