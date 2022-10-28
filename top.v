@@ -25,7 +25,7 @@ module data_mem (input clk, we,
 	always @ (posedge clk)
 		if (we) begin
 			RAM[address[31:2]]<=wd;
-			$display (wd);
+			// $display (wd);
 		end
 endmodule
 
@@ -36,7 +36,8 @@ module inst_mem (input  [5:0]  address,
 	reg [31:0] RAM[63:0];
 	initial begin
 		// $readmemh ("memfile_inst.hex",RAM,0,63);
-		$readmemh ("testcode.hex",RAM,0,63);
+		// $readmemh ("testprog.hex",RAM,0,63);
+		$readmemh ("myTest.hex",RAM,0,63);
 	end
 	assign rd=RAM[address]; // word aligned
 endmodule

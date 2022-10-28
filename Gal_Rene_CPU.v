@@ -1,6 +1,8 @@
 `default_nettype none
 
 /*
+    delenie
+    v 115s sa to jebe
 */
 module processor( input         clk, reset,
                   output [31:0] PC,
@@ -46,6 +48,7 @@ module processor( input         clk, reset,
     wire ALUSrcControl;
     wire MemToRegControl;
     wire branchBeqControl;
+    wire branchBneControl;
     wire branchJalControl;
     wire branchJalrControl;
     wire branchBltControl;   
@@ -64,17 +67,20 @@ module processor( input         clk, reset,
                       branchBeqControl,
                       branchJalControl,
                       branchJalrControl,
-                      branchBltControl );
+                      branchBltControl,
+                      branchBneControl,
+                      auiControl );
 
     assign branchJalrMuxIn = immOp + program_counter; // branch adder
 
     mux2_1_32b ALUSrc_mux ( ALUSrcControl, writeData, immOp, AluSrcOut );
     mux2_1_32b MemToReg_mux ( MemToRegControl, branchJalReturnAddr, readData, memToRegRes );
-    wire branchOutcome = ( branchBeqControl & zero ) | branchJalControl | branchJalrControl | ( ALUOut & branchBltControl );
+    wire branchBX = ( branchBeqControl & zero ) | ( ALUOut & branchBltControl ) | ( branchBneControl & ! zero );
+    wire branchOutcome = branchBX | branchJalControl | branchJalrControl;
     mux2_1_32b BranchOutcome_mux ( branchOutcome, PCPlus4, branchTarget, PC_cable );
     mux2_1_32b BranchJalAndJalr_mux ( branchJalControl | branchJalrControl, ALUOut, PCPlus4, branchJalReturnAddr );
     mux2_1_32b BranchJalr_mux ( branchJalrControl, branchJalrMuxIn, ALUOut, branchTarget );
-    mux2_1_32b aui_mux ( auiControl, rs1, writeData, srcACable );
+    mux2_1_32b aui_mux ( auiControl, rs1, program_counter, srcACable );
 
     
 endmodule
@@ -135,12 +141,13 @@ module reg_32b ( input [4:0] a1, a2, a3,
     assign rd2 = registers[a2];
 
     always @ ( posedge clk )
-        if ( we3 && a3 != 0)
+        if ( we3 && a3 != 0 ) begin
             registers[a3] <= wd3;
-
+        $display ( "writing data: %d to %d", wd3, a3 );
+        end
 endmodule
 
-module alu_32b ( input [31:0] srcA, srcB,
+module alu_32b ( input signed [31:0] srcA, srcB,
                  input [2:0] ALUControl,
                  output reg [31:0] ALUResult,
                  output reg zero );
@@ -153,6 +160,7 @@ module alu_32b ( input [31:0] srcA, srcB,
             3'b011: ALUResult = srcA < srcB ? 1 : 0; // slt
             3'b100: ALUResult = srcA / srcB;
             3'b101: ALUResult = srcA % srcB;
+            3'b110: ALUResult = srcB; // lui
             3'b111: ALUResult = srcA | srcB;
         endcase
     
@@ -170,7 +178,9 @@ module control_unit ( input [31:0]      instruction,
                                        branchBeqControl,
                                        branchJalControl,
                                        branchJalrControl,
-                                       branchBltControl );
+                                       branchBltControl,
+                                       branchBneControl,
+                                       auiControl );
         wire [6:0] opcode = instruction[6:0];
         wire [14:12] funct3 = instruction[14:12];
         wire [31:25] funct7 = instruction[31:25];
@@ -190,6 +200,8 @@ module control_unit ( input [31:0]      instruction,
                       branchJalControl = 0;
                       branchJalrControl = 0;
                       branchBltControl = 0;
+                      auiControl = 0;
+                      branchBneControl = 0;
                     end
                 endcase
             end
@@ -206,6 +218,8 @@ module control_unit ( input [31:0]      instruction,
                       branchJalControl = 0;
                       branchJalrControl = 0;
                       branchBltControl = 0;
+                      auiControl = 0;
+                      branchBneControl = 0;
                     end
                 endcase
             end
@@ -222,6 +236,8 @@ module control_unit ( input [31:0]      instruction,
                         branchJalControl = 0;
                         branchJalrControl = 0;
                         branchBltControl = 0;
+                        auiControl = 0;
+                        branchBneControl = 0;
                     end
                 endcase
             end
@@ -239,6 +255,8 @@ module control_unit ( input [31:0]      instruction,
                                 branchJalControl = 0;
                                 branchJalrControl = 0;
                                 branchBltControl = 0;
+                                auiControl = 0;
+                                branchBneControl = 0;
                             end
                             7'b0100000: begin // sub
                                 immControl = 3'b000;
@@ -251,6 +269,8 @@ module control_unit ( input [31:0]      instruction,
                                 branchJalControl = 0;
                                 branchJalrControl = 0;
                                 branchBltControl = 0;
+                                auiControl = 0;
+                                branchBneControl = 0;
                             end
                         endcase
                     3'b010: begin // slt
@@ -264,6 +284,8 @@ module control_unit ( input [31:0]      instruction,
                         branchJalControl = 0;
                         branchJalrControl = 0;
                         branchBltControl = 0;
+                        auiControl = 0;
+                        branchBneControl = 0;
                     end
                     3'b110: begin // rem
                         immControl = 3'b000;
@@ -271,11 +293,13 @@ module control_unit ( input [31:0]      instruction,
                         memWriteControl = 0;
                         regWriteControl = 1;
                         ALUSrcControl = 0;
-                        MemToRegControl = 0;
+                        MemToRegControl = 0; // 0010011
                         branchBeqControl = 0;
                         branchJalControl = 0;
                         branchJalrControl = 0;
                         branchBltControl = 0;
+                        auiControl = 0;
+                        branchBneControl = 0;
                     end
                     3'b111: begin // and
                         immControl = 3'b000;
@@ -288,6 +312,22 @@ module control_unit ( input [31:0]      instruction,
                         branchJalControl = 0;
                         branchJalrControl = 0;
                         branchBltControl = 0;
+                        auiControl = 0;
+                        branchBneControl = 0;
+                    end
+                    3'b100: begin // div
+                        immControl = 3'b000;
+                        ALUControl = 3'b100;
+                        memWriteControl = 0;
+                        regWriteControl = 1;
+                        ALUSrcControl = 0;
+                        MemToRegControl = 0;
+                        branchBeqControl = 0;
+                        branchJalControl = 0;
+                        branchJalrControl = 0;
+                        branchBltControl = 0;
+                        auiControl = 0;
+                        branchBneControl = 0;
                     end
                 endcase
             end
@@ -304,18 +344,36 @@ module control_unit ( input [31:0]      instruction,
                         branchJalControl = 0;
                         branchJalrControl = 0;
                         branchBltControl = 0;
+                        auiControl = 0;
+                        branchBneControl = 0;
                     end
-                    3'b001: begin // blt
+                    3'b100: begin // blt
                         immControl = 3'b011;
                         ALUControl = 3'b011;
                         memWriteControl = 0;
                         regWriteControl = 0;
                         ALUSrcControl = 0;
                         MemToRegControl = 0;
-                        branchBeqControl = 1;
+                        branchBeqControl = 0;
                         branchJalControl = 0;
                         branchJalrControl = 0;
                         branchBltControl = 1;
+                        auiControl = 0;
+                        branchBneControl = 0;
+                    end
+                    3'b001: begin // bne
+                        immControl = 3'b011;
+                        ALUControl = 3'b001;
+                        memWriteControl = 0;
+                        regWriteControl = 0;
+                        ALUSrcControl = 0;
+                        MemToRegControl = 0;
+                        branchBeqControl = 0;
+                        branchJalControl = 0;
+                        branchJalrControl = 0;
+                        branchBltControl = 0;
+                        auiControl = 0;
+                        branchBneControl = 1;
                     end
                 endcase
             end
@@ -330,6 +388,8 @@ module control_unit ( input [31:0]      instruction,
                 branchJalControl = 0;
                 branchJalrControl = 1;
                 branchBltControl = 0;
+                auiControl = 0;
+                branchBneControl = 0;
             end
             7'b1101111: begin // J-type: jal
                 immControl = 3'b101;
@@ -342,18 +402,22 @@ module control_unit ( input [31:0]      instruction,
                 branchJalControl = 1;
                 branchJalrControl = 0;
                 branchBltControl = 0;
+                auiControl = 0;
+                branchBneControl = 0;
             end
             7'b0110111: begin // lui
                 immControl = 3'b100;
-                ALUControl = 3'b000;
+                ALUControl = 3'b110;
                 memWriteControl = 0;
                 regWriteControl = 1;
                 ALUSrcControl = 1;
-                MemToRegControl = 1;
+                MemToRegControl = 0;
                 branchBeqControl = 0;
                 branchJalControl = 0;
                 branchJalrControl = 0;
                 branchBltControl = 0;
+                auiControl = 0;
+                branchBneControl = 0;
             end
             7'b0010111: begin // auipc
                 immControl = 3'b100;
@@ -361,12 +425,13 @@ module control_unit ( input [31:0]      instruction,
                 memWriteControl = 0;
                 regWriteControl = 1;
                 ALUSrcControl = 1;
-                MemToRegControl = 1;
+                MemToRegControl = 0;
                 branchBeqControl = 0;
                 branchJalControl = 0;
                 branchJalrControl = 0;
                 branchBltControl = 0;
                 auiControl = 1;
+                branchBneControl = 0;
             end
             endcase
         end
