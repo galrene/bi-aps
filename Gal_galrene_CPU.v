@@ -288,7 +288,7 @@ module control_unit ( input [31:0]      instruction,
                         memWriteControl = 0;
                         regWriteControl = 1;
                         ALUSrcControl = 0;
-                        MemToRegControl = 0; // 0010011
+                        MemToRegControl = 0;
                         branchBeqControl = 0;
                         branchJalControl = 0;
                         branchJalrControl = 0;
