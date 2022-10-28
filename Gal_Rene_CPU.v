@@ -1,8 +1,6 @@
 `default_nettype none
 
 /*
-    delenie
-    v 115s sa to jebe
 */
 module processor( input         clk, reset,
                   output [31:0] PC,
