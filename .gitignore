@@ -5,3 +5,4 @@
 *.jar
 memfile_data.hex
 memfile_inst.hex
+*.zip
