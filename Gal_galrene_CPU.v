@@ -38,7 +38,7 @@ module processor( input         clk, reset,
     wire [31:0] srcACable;
 
     /* Control signals */
-    wire [2:0] ALUControl;
+    wire [3:0] ALUControl;
     wire [2:0] immControl;
     wire memWriteControl;
     assign WE = memWriteControl;
@@ -143,20 +143,23 @@ module reg_32b ( input [4:0] a1, a2, a3,
 endmodule
 
 module alu_32b ( input signed [31:0] srcA, srcB,
-                 input [2:0] ALUControl,
+                 input [3:0] ALUControl,
                  output reg [31:0] ALUResult,
                  output reg zero );
     
     always @ (*) begin
         case ( ALUControl )
-            3'b000: ALUResult = srcA + srcB;
-            3'b001: ALUResult = srcA - srcB;
-            3'b010: ALUResult = srcA & srcB;
-            3'b011: ALUResult = srcA < srcB ? 1 : 0; // slt
-            3'b100: ALUResult = srcA / srcB;
-            3'b101: ALUResult = srcA % srcB;
-            3'b110: ALUResult = srcB; // lui
-            3'b111: ALUResult = srcA | srcB;
+            4'b0000: ALUResult = srcA + srcB;
+            4'b0001: ALUResult = srcA - srcB;
+            4'b0010: ALUResult = srcA & srcB;
+            4'b0011: ALUResult = srcA < srcB ? 1 : 0; // slt
+            4'b0100: ALUResult = srcA / srcB;
+            4'b0101: ALUResult = srcA % srcB;
+            4'b0110: ALUResult = srcB; // lui
+            4'b0111: ALUResult = srcA | srcB;
+            4'b1000: ALUResult = srcA << srcB; // sll
+            4'b1001: ALUResult = srcA >> srcB; // srl
+            4'b1010: ALUResult = srcA >>> srcB; // sra
         endcase
     
     zero = ALUResult == 0 ? 1 : 0;
@@ -165,17 +168,18 @@ module alu_32b ( input signed [31:0] srcA, srcB,
 endmodule
 
 module control_unit ( input [31:0]      instruction,
-                      output reg [2:0] immControl, ALUControl,
-                      output reg       memWriteControl,
-                                       regWriteControl,
-                                       ALUSrcControl,
-                                       MemToRegControl,
-                                       branchBeqControl,
-                                       branchJalControl,
-                                       branchJalrControl,
-                                       branchBltControl,
-                                       branchBneControl,
-                                       auiControl );
+                      output reg [2:0]  immControl,
+                      output reg [3:0]   ALUControl,
+                      output reg        memWriteControl,
+                                        regWriteControl,
+                                        ALUSrcControl,
+                                        MemToRegControl,
+                                        branchBeqControl,
+                                        branchJalControl,
+                                        branchJalrControl,
+                                        branchBltControl,
+                                        branchBneControl,
+                                        auiControl );
         wire [6:0] opcode = instruction[6:0];
         wire [14:12] funct3 = instruction[14:12];
         wire [31:25] funct7 = instruction[31:25];
@@ -323,6 +327,52 @@ module control_unit ( input [31:0]      instruction,
                         branchBltControl = 0;
                         auiControl = 0;
                         branchBneControl = 0;
+                    end
+                    3'b101: begin
+                        case ( funct7 )
+                            7'b0000000: begin // srl
+                                immControl   = 3'b000;
+                                ALUControl   = 4'b1001;
+                                memWriteControl   = 0;
+                                regWriteControl   = 1;
+                                ALUSrcControl     = 0;
+                                MemToRegControl   = 0;
+                                branchBeqControl  = 0;
+                                branchJalControl  = 0;
+                                branchJalrControl = 0;
+                                branchBltControl  = 0;
+                                auiControl        = 0;
+                                branchBneControl  = 0;
+                            end
+                            7'b0100000: begin // sra
+                                immControl   = 3'b000;
+                                ALUControl   = 4'b1010;
+                                memWriteControl   = 0;
+                                regWriteControl   = 1;
+                                ALUSrcControl     = 0;
+                                MemToRegControl   = 0;
+                                branchBeqControl  = 0;
+                                branchJalControl  = 0;
+                                branchJalrControl = 0;
+                                branchBltControl  = 0;
+                                auiControl        = 0;
+                                branchBneControl  = 0;
+                            end
+                        endcase
+                    end
+                    3'b001: begin // sll
+                        immControl   = 3'b000;
+                        ALUControl   = 4'b1000;
+                        memWriteControl   = 0;
+                        regWriteControl   = 1;
+                        ALUSrcControl     = 0;
+                        MemToRegControl   = 0;
+                        branchBeqControl  = 0;
+                        branchJalControl  = 0;
+                        branchJalrControl = 0;
+                        branchBltControl  = 0;
+                        auiControl        = 0;
+                        branchBneControl  = 0;
                     end
                 endcase
             end
