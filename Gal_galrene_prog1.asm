@@ -1,31 +1,30 @@
-#  .data
-#  .align 2
-#  size:
-#  .word 0
-#  .word 5
-#  array:
-#  .word 0xC
-#  .word 2, 3, 8, 5, 7
-#  .text
+# .data
+# .align 2
+# size:
+# .word 0
+# .word 7
+# array:
+# .word 0xC
+# .word 2, 3, 8, 5, 7, -1, 13
+# .text
 
 #----------------------------------------------------------------
-# Check if a1-numbers at address a2 are prime, set the respective values to 1 (prime) or 0 (not prime)
-# a1 = arr size
-# a2 = arr begin
+# Check if s0-numbers at address stored at a0 are prime, set the respective values to 1 (prime) or 0 (not prime)
+# s0 = arr size
+# a0 = arr begin
 main:
-	lw a1, 0x4 # arr_size
+	lw s0, 0x4 # arr_size
 	lw a0, 0x8 # arr begin address
-	blt a1, x0, end
+	blt s0, x0, end
 	
-	add t6, zero, a1 # i upper bound = arrSize
-	addi t5, zero, 0 # i = 0
+	addi s1, zero, 0 # s1 == i = 0
 	loop_primes:
-		beq t5, t6, end # i == arrSize
+		beq s1, s0, end # i == arrSize
 	# {
 		jal ra, prime
 	# }
 		addi a0, a0, 4 # arr_ptr++
-		addi t5, t5, 1 # i++
+		addi s1, s1, 1 # i++
 		jal, zero, loop_primes
 #----------------------------------------------------------------
 end:
@@ -34,16 +33,16 @@ end:
 # Check if number at address a0 is prime, set a0 to 1 (prime) or 0 (not prime)
 # a0 = number address
 prime:
-	# i upper bound = a4
-	lw a4, 0(a0) # int a4 = *a0
+	# i upper bound = t0
+	lw t0, 0(a0) # int t0 = *a0
 	addi t1, zero, 2 # i = 2
 	loop_prime:
-		beq a4, t1, end_prime # if i == num
+		beq t0, t1, end_prime # if i == num
 		
-		blt a4, zero, end_not_prime # num < 0 -> not prime
+		blt t0, zero, end_not_prime # num < 0 -> not prime
 
-		rem t2, a4, t1 # t2 = a4 % t1
-		beq zero, t2, end_not_prime # if ( a4 % t1 == 0 ) return 0
+		rem t2, t0, t1 # t2 = t0 % t1
+		beq zero, t2, end_not_prime # if ( t0 % t1 == 0 ) return 0
 
 		addi t1, t1, 1
 		jal, zero, loop_prime
